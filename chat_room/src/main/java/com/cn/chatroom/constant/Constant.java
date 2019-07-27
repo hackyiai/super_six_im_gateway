@@ -51,12 +51,8 @@ public class Constant {
 	public static final String ZK_CHAT_ROOM_SERVER = "/server";
 	//保存聊天记录条数
 	public static final int REDIS_SAVE_CHAT_SIZE = 30;
-	//redis记录MQ红包前缀
-	public static final String REDIS_REDPACKET_MQ = "string_redis_redpacket_mq";
-	//红包记录缓存有效期
-	public static final int REDIS_REDPACKET_VALIDITY = SysConstant.MQ_RETRY_SEND_FAILED_COUNT * 60 * SysConstant.MQ_RETRY_SEND_FAILED_COUNT * 2;
 	//没登录的用户昵称
-	public static final String NO_LOGIN_NAME = "匿名用户";
+	public static final String NO_LOGIN_NAME = "游客";
 	//未登录用户默认ID
 	public static final int NO_LOGIN_DEFAULT = 0;
 	//用户属性
@@ -69,20 +65,8 @@ public class Constant {
 	public static final String USER_FIELD_NICKNAME = "nickname";
 	//@用户ID
 	public static final String USER_FIELD_TARGETUSERID = "targetUserId";
-	//红包属性
-	public static final String RED_PACKET_FIELD_ID = "redPacketId";
-	//红包属性
-	public static final String RED_PACKET_FIELD_AMOUNT = "amount";
-	//红包属性
-	public static final String RED_PACKET_FIELD_COUNT= "count";
-	//红包状态
-	public static final String RED_PACKET_FIELD_STATUS= "status";
-	//红包点击状态
-	public static final String RED_PACKET_FIELD_CLICKED= "clicked";
 	//系統暱稱
 	public static final String SYS_NICKNAME = "溫馨提示";
-	//MQ红包有效时间
-	public static final int MQ_REDPACKET_EXPIRE_TIME = 86400;
 	//@他人提示语
 	public static final String CHAT_CALL_MSG = "%s刚刚@了你,请注意查看消息！";
 }

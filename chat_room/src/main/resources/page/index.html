@@ -36,7 +36,7 @@ function connect(){
 	username = document.getElementById("username").value;
 	var password = document.getElementById("password").value;
 	logDiv = document.getElementById('logs');
-	socket = new WebSocket("ws:"+ip+":"+port+"?username="+username+"&password="+password);
+	socket = new WebSocket("ws:"+ip+":"+port+"?token=564sd5f4s564x324fs56dxss5sf&extras={groupId:1,userId:1}");
 	socket.onopen = function(e){
 		
 	};
@@ -367,7 +367,7 @@ function groupHistoryCmd(){
 			<label >服务器IP:</label>
 			<input  id="serverIp" value="localhost"/>
 			<label>端口号:</label>
-			<input  id="port" value ="8888"/>
+			<input  id="port" value ="8080"/>
 		</div>
 		<div class="unit">
 			<label>聊天记录:</label>

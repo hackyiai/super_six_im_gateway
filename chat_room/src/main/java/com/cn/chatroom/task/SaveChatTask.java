@@ -60,6 +60,7 @@ public class SaveChatTask implements Runnable {
 		jedisTemplate.listPushHeadAndTrim(redisChatkey, JSONObject.toJSONString(chatBody), Constant.REDIS_SAVE_CHAT_SIZE);
 	}
 	
+	@SuppressWarnings("unused")
 	private static void pushOpsForHash(Object obj,String key){
 		if(obj==null)return;
 		Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(Object.class);

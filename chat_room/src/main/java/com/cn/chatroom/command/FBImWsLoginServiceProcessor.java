@@ -26,16 +26,9 @@ import org.slf4j.LoggerFactory;
 import org.tio.core.ChannelContext;
 
 import com.alibaba.fastjson.JSONObject;
-import com.cn.chatroom.bean.TempUserMQ;
-import com.cn.chatroom.component.MQProducer;
-import com.cn.chatroom.config.GroupConfig;
 import com.cn.chatroom.constant.Constant;
 import com.cn.chatroom.service.UserInfoService;
-import com.cn.constant.RedisKeyConstant;
 import com.cn.constant.UserConstant;
-import com.cn.enums.MQTagsEnum;
-import com.cn.enums.MQTopicTypeEnum;
-import com.cn.enums.UserLevelEnum;
 import com.cn.interceptor.UserToken;
 import com.cn.kit.StrKit;
 import com.cn.kit.UUIDKit;
@@ -64,43 +57,42 @@ public class FBImWsLoginServiceProcessor implements LoginProcessorIntf{
 		return "default";
 	}
 
+	/**
+	 * 登录验证
+	 */
 	@Override
 	public LoginRespBody doLogin(LoginReqBody loginReqBody, ChannelContext channelContext) {
-//		String loginname = loginReqBody.getLoginname();
-//		String password = loginReqBody.getPassword();
+		
 		String token = loginReqBody.getToken();
 		String groupId = loginReqBody.getExtras().getString(Constant.LOGIN_PRO_GROUPID);
 		String userId = loginReqBody.getExtras().getString(Constant.USER_FIELD_USERID);
-//		ImSessionContext imSessionContext = (ImSessionContext)channelContext.getAttribute();
 		User user = getUser(userId,token);
-//		else{
-//			user = getUser(loginname,password);
-//		}
-		if(!GroupConfig.getGroupConfig().containsKey(groupId)){
-			logger.info("join group is fail , because groupId is not exist ! ");
-			return new LoginRespBody(Command.COMMAND_LOGIN_RESP,ImStatus.C10008);
-		}
+		
 		LoginRespBody loginRespBody = null;
 		if(user == null){
 			loginRespBody = new LoginRespBody(Command.COMMAND_LOGIN_RESP,ImStatus.C10008);
 		}else{
 			channelContext.setAttribute(Constant.LOGIN_PRO_GROUPID,groupId);
 			channelContext.setAttribute(Constant.USER_FIELD_USERID,userId);
-			//为用户绑到组里面
+			//为用户绑到组里面(客服创建组，用户加入组)
 			List<Group> groups = new ArrayList<Group>(1);
-			groups.add(GroupConfig.getGroupConfig().get(groupId));
+			//这里取用户数据
+			groups.add(new Group("100","J-IM朋友圈"));
 			user.setGroups(groups);
 			loginRespBody = new LoginRespBody(Command.COMMAND_LOGIN_RESP,ImStatus.C10007,user);
 		}
 		return loginRespBody;
 	}
 
+	/**
+	 * 登录成功回调方法
+	 */
 	@Override
 	public void onSuccess(ChannelContext channelContext) {
 		Object obj = channelContext.getAttribute(Constant.LOGIN_PRO_GROUPID);
 		logger.info("登录成功回调方法，登錄次數{}，加入群組{}",(++count),obj);
 		if(null != obj){
-			//發送歷史記錄
+			//发送历史记录
 			sendHistory(channelContext.getUserid(),obj.toString(),channelContext.getAttribute(Constant.USER_FIELD_USERID).toString());
 		}
 		//joinGroupNotify(channelContext);
@@ -108,19 +100,19 @@ public class FBImWsLoginServiceProcessor implements LoginProcessorIntf{
      
 	/**
 	 * 
-    * @Title: getUser
-    * @Description: TODO(验证用户有效性)
-    * @param @return    参数
-    * @return User    返回类型
-    * @throws
+	 * @Title: getUser
+	 * @Description: TODO(验证用户有效性)
+	 * @param @return    参数
+	 * @return User    返回类型
+	 * @throws
 	 */
 	private User getUser(String userId,String token){
 		//判断token有效性
 		boolean flag = isValidateToken(userId,token);
-		//long id = StrKit.isBlank(userId) ? Constant.NO_LOGIN_DEFAULT : Long.valueOf(userId);
 
 		User user = new User();
 		if(flag && null != userId){
+			//通过token 取出用户信息
             UserInfo userInfo = UserInfoService.getUserInfo(Long.valueOf(userId));
             if(userInfo==null){
                 return null;
@@ -132,21 +124,6 @@ public class FBImWsLoginServiceProcessor implements LoginProcessorIntf{
 			extras.put(Constant.USER_FIELD_USERID, userInfo.getUserId());
 			extras.put(Constant.USER_FIELD_LEVEL, userInfo.getLevel());
 			user.setExtras(extras);
-		}else if(!StrKit.isBlank(token)&&hasKey(String.format(RedisKeyConstant.STRING_CHAT_EXPIRE_TOKEN,token))){
-			user.setId(token);
-			user.setNick(Constant.NO_LOGIN_NAME);
-			user.setAvatar(UserConstant.DEFAULT_USER_IMG);
-			JSONObject extras = new JSONObject();
-			extras.put(Constant.USER_FIELD_USERID, Constant.NO_LOGIN_DEFAULT);
-			extras.put(Constant.USER_FIELD_LEVEL, UserLevelEnum.DEFAULT);
-			user.setExtras(extras);
-			//發送延時MQ，移除長時間匿名用戶佔用連接
-			TempUserMQ tempUser = new TempUserMQ();
-			tempUser.setToken(token);
-			tempUser.setUserId(0l);
-			tempUser.setLevel(UserLevelEnum.SYS.getKey());
-			boolean isSend = MQProducer.sendDelayedThirtyminute(MQTopicTypeEnum.CHAT_ROOM, MQTagsEnum.SEND_REMOVE_CHAT, tempUser);
-			logger.info("sendDelayedThirtyminute token {} is {}",token,isSend);
 		}else{
 			user = null;
 		}
@@ -155,32 +132,13 @@ public class FBImWsLoginServiceProcessor implements LoginProcessorIntf{
 	
 	/**
 	 * 
-    * @Title: getUser
-    * @Description: TODO(验证用户有效性)
-    * @param @return    参数
-    * @return User    返回类型
-    * @throws
+	 * @Title: joinGroupNotify
+	 * @Description: TODO(登录成功回调方法)
+	 * @param @param channelContext    参数
+	 * @return void    返回类型
+	 * @throws
 	 */
-//	private User getUser(String loginname,String password){
-//		String text = loginname+password;
-//		String key = Const.authkey;
-//		String token = Md5.sign(text, key, HttpConst.CHARSET_NAME);
-//		
-//		User user = new User();
-//		user.setId("abc");
-//		user.setNick(NameUtil.getCName());
-//		user.setAvatar(Constant.USER_DEFAULT_HEADIMG);
-//		return user;
-//	}
-	
-	/**
-	 * 
-	    * @Title: joinGroupNotify
-	    * @Description: TODO(登录成功回调方法)
-	    * @param @param channelContext    参数
-	    * @return void    返回类型
-	    * @throws
-	 */
+	@SuppressWarnings("unused")
 	private void joinGroupNotify(ChannelContext channelContext){
 		ImSessionContext imSessionContext = (ImSessionContext)channelContext.getAttribute();
 		User user = imSessionContext.getClient().getUser();
@@ -216,28 +174,29 @@ public class FBImWsLoginServiceProcessor implements LoginProcessorIntf{
 		List<ChatBody> bodys = new ArrayList<>(list.size());
 		for(String item : list){
 			ChatBody chatBody = JSONObject.parseObject(item, ChatBody.class);
-			Object redPacketId = chatBody.getExtras().get(Constant.RED_PACKET_FIELD_ID);
-			if(redPacketId != null){
-				String gradKey = String.format(RedisKeyConstant.GRAB_REDPACKET_SET,redPacketId);
-				String createkey = String.format(RedisKeyConstant.CREATE_REDPACKET_LIST,redPacketId);
-				String viewKey = String.format(RedisKeyConstant.SET_VIEW_REDPACKET,redPacketId);
-				//红包状态
-				if(jedisTemplate.setGetAll(gradKey)==null){
-					logger.info("該紅包已过期 gradKey is null");
-					chatBody.getExtras().put(Constant.RED_PACKET_FIELD_STATUS,4);
-				}else if(jedisTemplate.listGetAll(createkey)==null){
-					logger.info("該紅包已过期 createkey is null");
-					chatBody.getExtras().put(Constant.RED_PACKET_FIELD_STATUS,4);
-				}else if(jedisTemplate.isMember(gradKey,userId)){
-					logger.info("您已搶過該紅包");
-					chatBody.getExtras().put(Constant.RED_PACKET_FIELD_STATUS,3);
-				}else if(jedisTemplate.listGetAll(createkey).size()==0){
-					logger.info("您來晚了，紅包已被搶完");
-					chatBody.getExtras().put(Constant.RED_PACKET_FIELD_STATUS,1);
-				}
-				//设置点击状态
-				chatBody.getExtras().put(Constant.RED_PACKET_FIELD_CLICKED,jedisTemplate.isMember(viewKey,userId));
-			}
+			//聊天室模块红包状态
+//			Object redPacketId = chatBody.getExtras().get(Constant.RED_PACKET_FIELD_ID);
+//			if(redPacketId != null){
+//				String gradKey = String.format(RedisKeyConstant.GRAB_REDPACKET_SET,redPacketId);
+//				String createkey = String.format(RedisKeyConstant.CREATE_REDPACKET_LIST,redPacketId);
+//				String viewKey = String.format(RedisKeyConstant.SET_VIEW_REDPACKET,redPacketId);
+//				//红包状态
+//				if(jedisTemplate.setGetAll(gradKey)==null){
+//					logger.info("該紅包已过期 gradKey is null");
+//					chatBody.getExtras().put(Constant.RED_PACKET_FIELD_STATUS,4);
+//				}else if(jedisTemplate.listGetAll(createkey)==null){
+//					logger.info("該紅包已过期 createkey is null");
+//					chatBody.getExtras().put(Constant.RED_PACKET_FIELD_STATUS,4);
+//				}else if(jedisTemplate.isMember(gradKey,userId)){
+//					logger.info("您已搶過該紅包");
+//					chatBody.getExtras().put(Constant.RED_PACKET_FIELD_STATUS,3);
+//				}else if(jedisTemplate.listGetAll(createkey).size()==0){
+//					logger.info("您來晚了，紅包已被搶完");
+//					chatBody.getExtras().put(Constant.RED_PACKET_FIELD_STATUS,1);
+//				}
+//				//设置点击状态
+//				chatBody.getExtras().put(Constant.RED_PACKET_FIELD_CLICKED,jedisTemplate.isMember(viewKey,userId));
+//			}
 			bodys.add(chatBody);
 		}
 		JSONObject extras = new JSONObject();
@@ -257,9 +216,15 @@ public class FBImWsLoginServiceProcessor implements LoginProcessorIntf{
 		ImAio.sendToUser(token, imPacket);
 	}
 	
+	/**
+	 * 判断token有效性
+	 * @param userId
+	 * @param token
+	 * @return
+	 */
 	private boolean isValidateToken(String userId,String token){
 		boolean flag = false;
-		if(StrKit.notBlank(token)&&StrKit.notBlank(userId)){
+		if(StrKit.notBlank(token) && StrKit.notBlank(userId)){
 			UserToken userToken = UserInfoService.reGenToken(Long.valueOf(userId));
 			if(null != userToken){
 				return token.equals(userToken.getToken());
@@ -268,6 +233,12 @@ public class FBImWsLoginServiceProcessor implements LoginProcessorIntf{
 		return flag;
 	}
 	
+	/**
+	 * 查询Key 是否存在
+	 * @param key
+	 * @return
+	 */
+	@SuppressWarnings("unused")
 	private boolean hasKey(String key){
 		JedisTemplate jedisTemplate = null;
 		try {

@@ -11,8 +11,6 @@ import org.jim.common.utils.JsonKit;
 import org.jim.server.command.CommandManager;
 import org.jim.server.command.handler.LoginReqHandler;
 import org.jim.server.command.handler.processor.handshake.WsHandshakeProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tio.core.ChannelContext;
 
 import com.alibaba.fastjson.JSONObject;
@@ -27,7 +25,7 @@ import com.cn.chatroom.constant.Constant;
  */
 public class FBImWsHandshakeProcessor extends WsHandshakeProcessor {
 
-	private final static Logger logger = LoggerFactory.getLogger(FBImWsHandshakeProcessor.class);
+	//private final static Logger logger = LoggerFactory.getLogger(FBImWsHandshakeProcessor.class);
 	
 	@Override
 	public void onAfterHandshaked(ImPacket packet, ChannelContext channelContext) throws Exception {

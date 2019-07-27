@@ -32,6 +32,7 @@ public class CacheKit {
 		}
 		return data;
 	}
+	
 	/**
 	 * 获取缓存数据
 	 * 
@@ -46,6 +47,7 @@ public class CacheKit {
 		}
 		return null;
 	}
+	
 	/**
 	 * 设置缓存数据
 	 * 

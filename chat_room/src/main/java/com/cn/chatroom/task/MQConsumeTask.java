@@ -10,7 +10,6 @@ import com.cn.chatroom.config.RocketmqConfig;
 import com.cn.chatroom.constant.Constant;
 import com.cn.chatroom.listener.MQConsumeMsgListenerProcessor;
 import com.cn.enums.MQTagsEnum;
-import com.cn.enums.MQTopicTypeEnum;
 /**
  * 
 * @ClassName: MQConsumeTask
