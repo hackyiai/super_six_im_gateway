@@ -1,16 +1,5 @@
 package com.cn.chatroom.command;
 
-import com.alibaba.fastjson.JSONObject;
-import com.cn.chatroom.constant.ChatStatus;
-import com.cn.chatroom.constant.Constant;
-import com.cn.chatroom.service.UserInfoService;
-import com.cn.chatroom.task.SaveChatTask;
-import com.cn.chatroom.utils.SensitiveWordUtil;
-import com.cn.chatroom.utils.TaskUtil;
-import com.cn.enums.UserStatusEnum;
-import com.cn.interceptor.UserToken;
-import com.cn.kit.StrKit;
-import com.cn.model.UserInfo;
 import org.jim.common.ImAio;
 import org.jim.common.ImPacket;
 import org.jim.common.ImStatus;
@@ -22,6 +11,18 @@ import org.jim.server.command.handler.processor.chat.DefaultChatProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tio.core.ChannelContext;
+
+import com.alibaba.fastjson.JSONObject;
+import com.cn.chatroom.constant.ChatStatus;
+import com.cn.chatroom.constant.Constant;
+import com.cn.chatroom.service.UserInfoService;
+import com.cn.chatroom.task.SaveChatTask;
+import com.cn.chatroom.utils.SensitiveWordUtil;
+import com.cn.chatroom.utils.TaskUtil;
+import com.cn.enums.UserStatusEnum;
+import com.cn.interceptor.UserToken;
+import com.cn.kit.StrKit;
+import com.cn.model.UserInfo;
 /**
  * 
     * @ClassName: FBImWsChatProcessor
@@ -127,6 +128,7 @@ public class FBImWsChatProcessor extends DefaultChatProcessor{
 	 * @param imPacket
 	 * @throws Exception
 	 */
+	@SuppressWarnings("unused")
 	private void notifyToUser(String userId,ImPacket imPacket){
 		TaskUtil.execute(() -> ImAio.sendToUser(userId,imPacket));
 	}
